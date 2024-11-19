@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -48,18 +49,19 @@ public class CommentService {
     }
 
     public List<CommentResponse> getComments(long todoId) {
-        List<Comment> commentList = commentRepository.findByTodoIdWithUser(todoId);
+        // Fetch join으로 데이터 조회
+        List<Comment> commentList = commentRepository.findALLByTodoIdWithUser(todoId);
 
-        List<CommentResponse> dtoList = new ArrayList<>();
-        for (Comment comment : commentList) {
-            User user = comment.getUser();
-            CommentResponse dto = new CommentResponse(
+        // Stream을 활용하여 CommentResponse 리스트로 변환
+        return commentList.stream()
+            .map(comment -> {
+                User user = comment.getUser();
+                return new CommentResponse(
                     comment.getId(),
                     comment.getContents(),
                     new UserResponse(user.getId(), user.getEmail())
-            );
-            dtoList.add(dto);
-        }
-        return dtoList;
+                );
+            })
+            .collect(Collectors.toList());
     }
 }
